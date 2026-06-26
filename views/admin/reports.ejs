@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+  <%- include('../partials/admin-nav', { activePage: 'reports' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1>📈 Reports</h1>
+    </div>
+
+    <div class="admin-card">
+      <form action="/admin/reports" method="GET" class="filters-form">
+        <div class="filter-group">
+          <label for="from_date">From Date</label>
+          <input type="date" id="from_date" name="from_date" value="<%= filters.from_date || '' %>">
+        </div>
+        <div class="filter-group">
+          <label for="to_date">To Date</label>
+          <input type="date" id="to_date" name="to_date" value="<%= filters.to_date || '' %>">
+        </div>
+        <div class="filter-group">
+          <label for="min_rating">Min Rating</label>
+          <input type="number" id="min_rating" name="min_rating" min="1" max="10" value="<%= filters.min_rating || '' %>">
+        </div>
+        <div class="filter-group">
+          <label for="max_rating">Max Rating</label>
+          <input type="number" id="max_rating" name="max_rating" min="1" max="10" value="<%= filters.max_rating || '' %>">
+        </div>
+        <div class="filter-group">
+          <label for="mobile_number">Mobile Number</label>
+          <input type="text" id="mobile_number" name="mobile_number" value="<%= filters.mobile_number || '' %>" placeholder="Search...">
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+          <a href="/admin/reports" class="btn btn-secondary btn-sm">Clear</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="stats-grid stats-grid-3">
+      <div class="stat-card">
+        <div class="stat-label">Entries Found</div>
+        <div class="stat-value"><%= summary.total || 0 %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Average Rating</div>
+        <div class="stat-value"><%= summary.avg_rating || 0 %> <span class="stat-unit">/10</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Amount</div>
+        <div class="stat-value">₹<%= summary.total_amount ? Number(summary.total_amount).toFixed(2) : '0.00' %></div>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div class="card-header-row">
+        <h2>Results</h2>
+        <a class="btn btn-secondary btn-sm" id="export-link" href="/admin/reports/export">⬇ Export CSV</a>
+      </div>
+
+      <% if (rows.length === 0) { %>
+        <p class="empty-state">No feedback entries match these filters.</p>
+      <% } else { %>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>Amount</th>
+                <th>Bill No.</th>
+                <th>Rating</th>
+                <th>Feedback</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% rows.forEach((f, index) => { %>
+                <tr>
+                  <td><%= index + 1 %></td>
+                  <td><%= f.name %></td>
+                  <td><%= f.mobile_number %></td>
+                  <td><%= f.email %></td>
+                  <td>₹<%= Number(f.amount).toFixed(2) %></td>
+                  <td><%= f.bill_number %></td>
+                  <td><%= f.satisfaction_rating %>/10</td>
+                  <td class="message-cell"><%= f.feedback_text || '—' %></td>
+                  <td><%= new Date(f.submitted_at).toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <script>
+    // Keep the export link's query string in sync with whatever filters are currently applied
+    document.addEventListener('DOMContentLoaded', function () {
+      const exportLink = document.getElementById('export-link');
+      const currentParams = window.location.search;
+      exportLink.href = '/admin/reports/export' + currentParams;
+    });
+  </script>
+</body>
+</html>

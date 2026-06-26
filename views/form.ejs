@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= settings.shop_name || 'Our Shop' %> — Customer Feedback</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+
+    <div class="brand-header">
+      <% if (settings.logo_path) { %>
+        <img src="<%= settings.logo_path %>" alt="<%= settings.shop_name %> logo" class="shop-logo">
+      <% } %>
+      <h1><%= settings.shop_name || 'Our Shop' %></h1>
+    </div>
+
+    <div class="card">
+      <h2 class="form-title">Customer Feedback</h2>
+      <p class="subtitle">We value your feedback — let us know about your experience.</p>
+
+      <% if (success) { %>
+        <div class="alert alert-success">✅ Thank you! Your feedback has been received.</div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <form action="/submit" method="POST" id="feedback-form" novalidate>
+        <div class="form-group">
+          <label for="name">Name *</label>
+          <input type="text" id="name" name="name" placeholder="Enter your full name"
+                 value="<%= formData.name || '' %>" required>
+          <span class="field-error" id="name-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="mobile_number">Mobile Number *</label>
+          <input type="text" id="mobile_number" name="mobile_number" placeholder="10-digit mobile number"
+                 inputmode="numeric" maxlength="10" value="<%= formData.mobile_number || '' %>" required>
+          <span class="field-error" id="mobile-error"></span>
+          <span class="field-hint" id="mobile-checking" style="display:none;">Checking previous records...</span>
+        </div>
+
+        <!-- Existing customer feedback history shows up here if the mobile number matches a past entry -->
+        <div id="existing-feedback-section" style="display:none;">
+          <div class="info-box">
+            <strong>📋 We found previous feedback from this number:</strong>
+            <div class="table-wrapper">
+              <table id="existing-feedback-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Bill No.</th>
+                    <th>Amount</th>
+                    <th>Rating</th>
+                    <th>Feedback</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com"
+                 value="<%= formData.email || '' %>" required>
+          <span class="field-error" id="email-error"></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="amount">Purchase Amount (₹) *</label>
+            <input type="number" id="amount" name="amount" placeholder="0.00" step="0.01" min="0"
+                   value="<%= formData.amount || '' %>" required>
+          </div>
+
+          <div class="form-group">
+            <label for="bill_number">Bill Number *</label>
+            <input type="text" id="bill_number" name="bill_number" placeholder="e.g. BILL-1234"
+                   value="<%= formData.bill_number || '' %>" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="satisfaction_rating">How satisfied are you with your purchase? (1 = Poor, 10 = Excellent) *</label>
+          <div class="rating-scale" id="rating-scale">
+            <% for (let i = 1; i <= 10; i++) { %>
+              <input type="radio" name="satisfaction_rating" id="rating<%= i %>" value="<%= i %>"
+                     <%= (formData.satisfaction_rating == i) ? 'checked' : '' %> required>
+              <label for="rating<%= i %>"><%= i %></label>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="feedback_text">Your Feedback</label>
+          <textarea id="feedback_text" name="feedback_text" rows="4"
+                    placeholder="Tell us about your experience..."><%= formData.feedback_text || '' %></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+      </form>
+    </div>
+
+    <% if (footerLinks && footerLinks.length > 0) { %>
+      <footer class="site-footer">
+        <% footerLinks.forEach(link => { %>
+          <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+        <% }) %>
+      </footer>
+    <% } %>
+
+    <p class="admin-link"><a href="/admin/login">Admin Login →</a></p>
+  </div>
+
+  <script src="/js/form-validation.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+</head>
+<body class="admin-body">
+  <%- include('../partials/admin-nav', { activePage: 'dashboard' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1>📊 Dashboard</h1>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Feedback Today</div>
+        <div class="stat-value"><%= stats.today %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Feedback This Month</div>
+        <div class="stat-value"><%= stats.month %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Customers</div>
+        <div class="stat-value"><%= stats.totalCustomers %></div>
+      </div>
+      <div class="stat-card stat-card-highlight">
+        <div class="stat-label">Overall Review Score</div>
+        <div class="stat-value"><%= stats.avgRating %> <span class="stat-unit">/ 10</span></div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="admin-card chart-card">
+        <h2>Submissions Over Time (last 30 days)</h2>
+        <canvas id="submissionsChart"></canvas>
+      </div>
+      <div class="admin-card chart-card">
+        <h2>Satisfaction Rating Breakdown</h2>
+        <canvas id="ratingChart"></canvas>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <h2>Recent Feedback</h2>
+      <% if (recentFeedback.length === 0) { %>
+        <p class="empty-state">No feedback yet.</p>
+      <% } else { %>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Mobile</th><th>Rating</th><th>Submitted</th></tr>
+            </thead>
+            <tbody>
+              <% recentFeedback.forEach(f => { %>
+                <tr>
+                  <td><%= f.name %></td>
+                  <td><%= f.mobile_number %></td>
+                  <td><%= f.satisfaction_rating %>/10</td>
+                  <td><%= new Date(f.submitted_at).toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+      <a href="/admin/feedback" class="view-all-link">View all feedback →</a>
+    </div>
+  </main>
+
+  <script>
+    fetch('/admin/api/submissions-over-time')
+      .then(res => res.json())
+      .then(data => {
+        new Chart(document.getElementById('submissionsChart'), {
+          type: 'line',
+          data: {
+            labels: data.map(r => r.day),
+            datasets: [{
+              label: 'Submissions',
+              data: data.map(r => r.count),
+              borderColor: '#4f46e5',
+              backgroundColor: 'rgba(79, 70, 229, 0.1)',
+              tension: 0.3,
+              fill: true,
+              pointRadius: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      });
+
+    fetch('/admin/api/rating-breakdown')
+      .then(res => res.json())
+      .then(data => {
+        const fullData = Array.from({ length: 10 }, (_, i) => {
+          const found = data.find(d => d.rating === i + 1);
+          return found ? found.count : 0;
+        });
+
+        new Chart(document.getElementById('ratingChart'), {
+          type: 'bar',
+          data: {
+            labels: Array.from({ length: 10 }, (_, i) => `${i + 1}`),
+            datasets: [{
+              label: 'Responses',
+              data: fullData,
+              backgroundColor: '#4f46e5',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      });
+  </script>
+</body>
+</html>

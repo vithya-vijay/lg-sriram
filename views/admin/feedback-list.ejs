@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Entries</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+  <%- include('../partials/admin-nav', { activePage: 'feedback' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1>📝 Feedback Entries</h1>
+      <span class="badge"><%= feedback.length %> total</span>
+    </div>
+
+    <div class="admin-card">
+      <% if (feedback.length === 0) { %>
+        <p class="empty-state">No feedback entries yet.</p>
+      <% } else { %>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>Amount</th>
+                <th>Bill No.</th>
+                <th>Rating</th>
+                <th>Feedback</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% feedback.forEach((f, index) => { %>
+                <tr>
+                  <td><%= index + 1 %></td>
+                  <td><%= f.name %></td>
+                  <td><%= f.mobile_number %></td>
+                  <td><a href="mailto:<%= f.email %>"><%= f.email %></a></td>
+                  <td>₹<%= Number(f.amount).toFixed(2) %></td>
+                  <td><%= f.bill_number %></td>
+                  <td><%= f.satisfaction_rating %>/10</td>
+                  <td class="message-cell"><%= f.feedback_text || '—' %></td>
+                  <td><%= new Date(f.submitted_at).toLocaleString() %></td>
+                  <td class="actions-cell">
+                    <a href="/admin/feedback/<%= f.id %>/edit" class="btn btn-secondary btn-sm">Edit</a>
+                    <form action="/admin/feedback/<%= f.id %>/delete" method="POST" onsubmit="return confirm('Delete this feedback entry?');" style="display:inline;">
+                      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

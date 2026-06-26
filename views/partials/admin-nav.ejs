@@ -1,0 +1,14 @@
+<aside class="admin-sidebar">
+  <div class="admin-sidebar-brand">⚙️ Admin Panel</div>
+  <nav>
+    <a href="/admin/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>">📊 Dashboard</a>
+    <a href="/admin/feedback" class="<%= activePage === 'feedback' ? 'active' : '' %>">📝 Feedback Entries</a>
+    <a href="/admin/reports" class="<%= activePage === 'reports' ? 'active' : '' %>">📈 Reports</a>
+    <a href="/admin/users" class="<%= activePage === 'users' ? 'active' : '' %>">👥 Users</a>
+    <a href="/admin/settings" class="<%= activePage === 'settings' ? 'active' : '' %>">🎨 Logo & Footer</a>
+  </nav>
+  <div class="admin-sidebar-footer">
+    <div class="admin-sidebar-user">Logged in as <strong><%= adminUsername %></strong></div>
+    <a href="/admin/logout" class="admin-logout-link">Logout</a>
+  </div>
+</aside>

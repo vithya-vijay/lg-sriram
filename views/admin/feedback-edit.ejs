@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Feedback</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+  <%- include('../partials/admin-nav', { activePage: 'feedback' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1>✏️ Edit Feedback Entry</h1>
+    </div>
+
+    <div class="admin-card admin-card-narrow">
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <form action="/admin/feedback/<%= entry.id %>/edit" method="POST">
+        <div class="form-group">
+          <label for="name">Name *</label>
+          <input type="text" id="name" name="name" value="<%= entry.name %>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="mobile_number">Mobile Number *</label>
+          <input type="text" id="mobile_number" name="mobile_number" value="<%= entry.mobile_number %>" maxlength="10" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" value="<%= entry.email %>" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="amount">Amount (₹) *</label>
+            <input type="number" id="amount" name="amount" value="<%= entry.amount %>" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="bill_number">Bill Number *</label>
+            <input type="text" id="bill_number" name="bill_number" value="<%= entry.bill_number %>" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="satisfaction_rating">Satisfaction Rating (1-10) *</label>
+          <input type="number" id="satisfaction_rating" name="satisfaction_rating" value="<%= entry.satisfaction_rating %>" min="1" max="10" required>
+        </div>
+
+        <div class="form-group">
+          <label for="feedback_text">Feedback</label>
+          <textarea id="feedback_text" name="feedback_text" rows="4"><%= entry.feedback_text || '' %></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <a href="/admin/feedback" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

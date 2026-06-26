@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+  <%- include('../partials/admin-nav', { activePage: 'users' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1>👥 Users</h1>
+    </div>
+
+    <div class="tabs">
+      <a href="/admin/users?tab=admins" class="tab <%= tab === 'admins' ? 'active' : '' %>">Admins</a>
+      <a href="/admin/users?tab=customers" class="tab <%= tab === 'customers' ? 'active' : '' %>">Customers</a>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <% if (tab === 'admins') { %>
+      <div class="admin-card admin-card-narrow">
+        <h2>Add New Admin</h2>
+        <form action="/admin/users/admins/add" method="POST" class="inline-form">
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="password" name="password" placeholder="Password (6+ chars)" minlength="6" required>
+          <button type="submit" class="btn btn-primary btn-sm">Add Admin</button>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <h2>Admin Accounts</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Username</th><th>Created</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <% admins.forEach(a => { %>
+                <tr>
+                  <td><%= a.username %> <% if (a.id === currentAdminId) { %><span class="badge-small">you</span><% } %></td>
+                  <td><%= new Date(a.created_at).toLocaleDateString() %></td>
+                  <td>
+                    <% if (a.id !== currentAdminId) { %>
+                      <form action="/admin/users/admins/<%= a.id %>/delete" method="POST" onsubmit="return confirm('Delete this admin account?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    <% } else { %>
+                      <span class="text-muted">—</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="admin-card">
+        <h2>Customers</h2>
+        <% if (customers.length === 0) { %>
+          <p class="empty-state">No customers yet.</p>
+        <% } else { %>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Email</th>
+                  <th>Feedback Given</th>
+                  <th>First Seen</th>
+                  <th>Last Seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% customers.forEach(c => { %>
+                  <tr>
+                    <td><%= c.name %></td>
+                    <td><%= c.mobile_number %></td>
+                    <td><%= c.email || '—' %></td>
+                    <td><%= c.feedback_count %></td>
+                    <td><%= new Date(c.first_seen_at).toLocaleDateString() %></td>
+                    <td><%= new Date(c.last_seen_at).toLocaleDateString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>
