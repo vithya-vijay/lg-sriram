@@ -9,13 +9,13 @@ CMS-style logo + footer link manager for the public-facing form.
 
 ### Customer-facing feedback form
 - Fields: Name, Mobile Number (numeric-only, 10-digit validated), Email
-  (validated), Purchase Amount, Bill Number, Satisfaction Rating (1–10),
-  Feedback text
+  (validated), Category (dropdown, admin-managed), Model, Purchase Amount,
+  Bill Number, Satisfaction Rating (1–10), Feedback text
 - **Live mobile number lookup** — if the customer enters a mobile number
   that already has feedback on file, their past submissions show up in a
   table right on the form (read-only, informational)
-- Logo and footer links are pulled live from the database — no code change
-  needed to update branding
+- Logo, footer links, and category options are all pulled live from the
+  database — no code change needed to update branding or category lists
 - Client-side + server-side validation (never trust the client alone)
 
 ### Admin panel
@@ -33,8 +33,9 @@ CMS-style logo + footer link manager for the public-facing form.
   - *Customers*: view every unique customer, with their feedback count and
     first/last seen dates
 - **Logo & Footer settings** — upload a shop logo (PNG/JPG/SVG/WEBP, 2MB
-  max), set the shop name, and add/remove footer links — all reflected
-  immediately on the public form
+  max), set the shop name, manage the Category dropdown list (add/remove
+  categories shown on the feedback form), and add/remove footer links —
+  all reflected immediately on the public form
 
 ## Prerequisites
 - **Node.js** v16+
@@ -63,13 +64,25 @@ DB_NAME=lg-sriram
 ```
 
 ### 3. Initialize the database
+
+**Fresh install** (no existing data):
 This creates the `lg-sriram` database, every table, a default
 `site_settings` row, and a default admin account:
 ```bash
 npm run init-db
 ```
 
-Expected output:
+**Existing install** (you already have data and ran `init-db` before, and
+are just adding the new Category/Model fields):
+```bash
+node config/migrate_add_category_model.js
+```
+This is safe to run on a live database — it only adds the new
+`categories` table and the two new `feedback` columns (`category_id`,
+`model`). It won't touch or delete any existing rows, and it's safe to
+run more than once if you're unsure whether it already ran.
+
+Expected output (fresh install):
 ```
 Creating database `lg-sriram` if it doesn't exist...
 Creating "admins" table...
@@ -160,14 +173,24 @@ lg-sriram/
 |----------------------|-----------------|
 | id                   | INT (PK)        |
 | customer_id          | INT (FK → customers.id) |
+| category_id          | INT (FK → categories.id) |
 | name                 | VARCHAR(100)    |
 | mobile_number        | VARCHAR(15)     |
 | email                | VARCHAR(150)    |
 | amount               | DECIMAL(10,2)   |
 | bill_number          | VARCHAR(50)     |
+| model                | VARCHAR(100)    |
 | satisfaction_rating  | TINYINT (1-10)  |
 | feedback_text        | TEXT            |
 | submitted_at         | TIMESTAMP       |
+
+**categories** — admin-managed dropdown options for the feedback form
+| Column         | Type         |
+|----------------|--------------|
+| id             | INT (PK)     |
+| name           | VARCHAR(100) UNIQUE |
+| display_order  | INT          |
+| created_at     | TIMESTAMP    |
 
 **footer_links**
 | Column         | Type         |

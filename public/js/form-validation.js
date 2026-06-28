@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const date = new Date(entry.submitted_at).toLocaleDateString();
             row.innerHTML = `
               <td>${date}</td>
+              <td>${escapeHtml(entry.category_name || '—')}</td>
+              <td>${escapeHtml(entry.model || '—')}</td>
               <td>${escapeHtml(entry.bill_number)}</td>
               <td>₹${Number(entry.amount).toFixed(2)}</td>
               <td>${entry.satisfaction_rating}/10</td>

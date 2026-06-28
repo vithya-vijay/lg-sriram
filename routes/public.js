@@ -2,22 +2,26 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 
-// Helper: load logo + footer links + shop name for every public page
+// Helper: load logo + footer links + shop name + categories for every public page
 async function getSiteData() {
   const [[settings]] = await pool.query('SELECT * FROM site_settings WHERE id = 1');
   const [footerLinks] = await pool.query(
     'SELECT * FROM footer_links ORDER BY display_order ASC, id ASC'
   );
-  return { settings: settings || {}, footerLinks };
+  const [categories] = await pool.query(
+    'SELECT * FROM categories ORDER BY display_order ASC, name ASC'
+  );
+  return { settings: settings || {}, footerLinks, categories };
 }
 
 // ----- Feedback form page -----
 router.get('/', async (req, res) => {
   try {
-    const { settings, footerLinks } = await getSiteData();
+    const { settings, footerLinks, categories } = await getSiteData();
     res.render('form', {
       settings,
       footerLinks,
+      categories,
       success: req.query.success,
       error: null,
       existingFeedback: null,
@@ -41,10 +45,13 @@ router.get('/api/lookup-mobile/:mobile', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT id, name, email, amount, bill_number, satisfaction_rating, feedback_text, submitted_at
-       FROM feedback
-       WHERE mobile_number = ?
-       ORDER BY submitted_at DESC`,
+      `SELECT f.id, f.name, f.email, f.amount, f.bill_number, f.model,
+              f.satisfaction_rating, f.feedback_text, f.submitted_at,
+              c.name AS category_name
+       FROM feedback f
+       LEFT JOIN categories c ON c.id = f.category_id
+       WHERE f.mobile_number = ?
+       ORDER BY f.submitted_at DESC`,
       [mobile]
     );
     res.json({ exists: rows.length > 0, entries: rows });
@@ -56,7 +63,7 @@ router.get('/api/lookup-mobile/:mobile', async (req, res) => {
 
 // ----- Handle feedback submission -----
 router.post('/submit', async (req, res) => {
-  const { name, mobile_number, email, amount, bill_number, satisfaction_rating, feedback_text } = req.body;
+  const { name, mobile_number, email, amount, bill_number, model, category_id, satisfaction_rating, feedback_text } = req.body;
 
   // Server-side validation (mirrors the client-side checks, never trust the client alone)
   const errors = [];
@@ -76,6 +83,9 @@ router.post('/submit', async (req, res) => {
   if (!bill_number || bill_number.trim().length === 0) {
     errors.push('Bill number is required.');
   }
+  if (!category_id) {
+    errors.push('Please select a category.');
+  }
   const rating = parseInt(satisfaction_rating, 10);
   if (!rating || rating < 1 || rating > 10) {
     errors.push('Satisfaction rating must be between 1 and 10.');
@@ -83,10 +93,11 @@ router.post('/submit', async (req, res) => {
 
   if (errors.length > 0) {
     try {
-      const { settings, footerLinks } = await getSiteData();
+      const { settings, footerLinks, categories } = await getSiteData();
       return res.render('form', {
         settings,
         footerLinks,
+        categories,
         success: null,
         error: errors.join(' '),
         existingFeedback: null,
@@ -125,15 +136,17 @@ router.post('/submit', async (req, res) => {
     // Insert feedback
     await conn.query(
       `INSERT INTO feedback
-        (customer_id, name, mobile_number, email, amount, bill_number, satisfaction_rating, feedback_text)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        (customer_id, category_id, name, mobile_number, email, amount, bill_number, model, satisfaction_rating, feedback_text)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         customerId,
+        parseInt(category_id, 10),
         name.trim(),
         mobile_number,
         email.trim(),
         parseFloat(amount),
         bill_number.trim(),
+        model ? model.trim() : null,
         rating,
         feedback_text ? feedback_text.trim() : null
       ]
@@ -145,10 +158,11 @@ router.post('/submit', async (req, res) => {
     await conn.rollback();
     console.error('Error saving feedback:', err);
     try {
-      const { settings, footerLinks } = await getSiteData();
+      const { settings, footerLinks, categories } = await getSiteData();
       res.render('form', {
         settings,
         footerLinks,
+        categories,
         success: null,
         error: 'Something went wrong while saving your feedback. Please try again.',
         existingFeedback: null,

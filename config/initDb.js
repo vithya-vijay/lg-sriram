@@ -2,7 +2,7 @@
  * Run this once before starting the app:
  *   npm run init-db
  *
- * Creates the `lg_sriram` database, all required tables, a default admin
+ * Creates the `lg-sriram` database, all required tables, a default admin
  * account, and a default site_settings row (so the app has something to
  * render before the admin uploads a logo / adds footer links).
  */
@@ -12,14 +12,14 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 async function initDb() {
-  const dbName = process.env.DB_NAME || 'llg_sriram';
+  const dbName = process.env.DB_NAME || 'lg-sriram';
 
   // Step 1: connect WITHOUT specifying a database, so we can create it
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'Root@123'
+    password: process.env.DB_PASSWORD || ''
   });
 
   console.log(`Creating database \`${dbName}\` if it doesn't exist...`);
@@ -56,6 +56,31 @@ async function initDb() {
   `);
 
   // ---------------------------------------------------------------
+  // categories — admin-managed dropdown options for the feedback form
+  // ---------------------------------------------------------------
+  console.log('Creating "categories" table...');
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL UNIQUE,
+      display_order INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  const [categoryRows] = await connection.query('SELECT COUNT(*) AS count FROM categories');
+  if (categoryRows[0].count === 0) {
+    console.log('Seeding default categories...');
+    await connection.query(`
+      INSERT INTO categories (name, display_order) VALUES
+      ('Electronics', 1),
+      ('Appliances', 2),
+      ('Mobile & Accessories', 3),
+      ('Other', 99)
+    `);
+  }
+
+  // ---------------------------------------------------------------
   // feedback — one row per submission
   // ---------------------------------------------------------------
   console.log('Creating "feedback" table...');
@@ -63,15 +88,18 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS feedback (
       id INT AUTO_INCREMENT PRIMARY KEY,
       customer_id INT,
+      category_id INT,
       name VARCHAR(100) NOT NULL,
       mobile_number VARCHAR(15) NOT NULL,
       email VARCHAR(150) NOT NULL,
       amount DECIMAL(10,2) NOT NULL,
       bill_number VARCHAR(50) NOT NULL,
+      model VARCHAR(100),
       satisfaction_rating TINYINT NOT NULL CHECK (satisfaction_rating BETWEEN 1 AND 10),
       feedback_text TEXT,
       submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
       INDEX idx_mobile (mobile_number),
       INDEX idx_submitted_at (submitted_at)
     )

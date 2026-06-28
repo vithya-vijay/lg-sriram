@@ -34,18 +34,22 @@ const upload = multer({
   }
 });
 
-// ----- Settings page (logo + footer links management) -----
+// ----- Settings page (logo + footer links + categories management) -----
 router.get('/', requireLogin, async (req, res) => {
   try {
     const [[settings]] = await pool.query('SELECT * FROM site_settings WHERE id = 1');
     const [footerLinks] = await pool.query(
       'SELECT * FROM footer_links ORDER BY display_order ASC, id ASC'
     );
+    const [categories] = await pool.query(
+      'SELECT * FROM categories ORDER BY display_order ASC, name ASC'
+    );
 
     res.render('admin/settings', {
       adminUsername: req.session.adminUsername,
       settings: settings || {},
       footerLinks,
+      categories,
       error: req.query.error || null,
       success: req.query.success || null
     });
@@ -117,6 +121,43 @@ router.post('/footer-links/:id/delete', requireLogin, async (req, res) => {
     res.redirect('/admin/settings?success=Footer+link+removed');
   } catch (err) {
     console.error('Error deleting footer link:', err);
+    res.redirect('/admin/settings?error=Something+went+wrong');
+  }
+});
+
+// ----- Add a category -----
+router.post('/categories/add', requireLogin, async (req, res) => {
+  const { name, display_order } = req.body;
+
+  if (!name || name.trim().length === 0) {
+    return res.redirect('/admin/settings?error=Category+name+is+required');
+  }
+
+  try {
+    await pool.query(
+      'INSERT INTO categories (name, display_order) VALUES (?, ?)',
+      [name.trim(), parseInt(display_order, 10) || 0]
+    );
+    res.redirect('/admin/settings?success=Category+added');
+  } catch (err) {
+    console.error('Error adding category:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.redirect('/admin/settings?error=That+category+already+exists');
+    }
+    res.redirect('/admin/settings?error=Something+went+wrong');
+  }
+});
+
+// ----- Delete a category -----
+// Existing feedback rows that reference this category keep their data —
+// the foreign key is ON DELETE SET NULL, so their category_id just becomes
+// NULL rather than the delete being blocked or the feedback being removed.
+router.post('/categories/:id/delete', requireLogin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    res.redirect('/admin/settings?success=Category+removed');
+  } catch (err) {
+    console.error('Error deleting category:', err);
     res.redirect('/admin/settings?error=Something+went+wrong');
   }
 });

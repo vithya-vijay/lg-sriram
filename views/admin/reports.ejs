@@ -36,6 +36,15 @@
           <label for="mobile_number">Mobile Number</label>
           <input type="text" id="mobile_number" name="mobile_number" value="<%= filters.mobile_number || '' %>" placeholder="Search...">
         </div>
+        <div class="filter-group">
+          <label for="category_id">Category</label>
+          <select id="category_id" name="category_id">
+            <option value="">All Categories</option>
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat.id %>" <%= (filters.category_id == cat.id) ? 'selected' : '' %>><%= cat.name %></option>
+            <% }) %>
+          </select>
+        </div>
         <div class="filter-actions">
           <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
           <a href="/admin/reports" class="btn btn-secondary btn-sm">Clear</a>
@@ -75,6 +84,8 @@
                 <th>Name</th>
                 <th>Mobile</th>
                 <th>Email</th>
+                <th>Category</th>
+                <th>Model</th>
                 <th>Amount</th>
                 <th>Bill No.</th>
                 <th>Rating</th>
@@ -89,6 +100,8 @@
                   <td><%= f.name %></td>
                   <td><%= f.mobile_number %></td>
                   <td><%= f.email %></td>
+                  <td><%= f.category_name || '—' %></td>
+                  <td><%= f.model || '—' %></td>
                   <td>₹<%= Number(f.amount).toFixed(2) %></td>
                   <td><%= f.bill_number %></td>
                   <td><%= f.satisfaction_rating %>/10</td>

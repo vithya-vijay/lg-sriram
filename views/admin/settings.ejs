@@ -48,6 +48,43 @@
       </form>
     </div>
 
+    <!-- Categories -->
+    <div class="admin-card">
+      <h2>Feedback Form Categories</h2>
+      <p class="subtitle">These appear as the Category dropdown on the customer feedback form.</p>
+
+      <form action="/admin/settings/categories/add" method="POST" class="inline-form">
+        <input type="text" name="name" placeholder="Category name (e.g. Refrigerators)" required>
+        <input type="number" name="display_order" placeholder="Order" min="0" style="width:80px;">
+        <button type="submit" class="btn btn-primary btn-sm">Add Category</button>
+      </form>
+
+      <% if (categories.length === 0) { %>
+        <p class="empty-state">No categories added yet.</p>
+      <% } else { %>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr><th>Order</th><th>Name</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <% categories.forEach(cat => { %>
+                <tr>
+                  <td><%= cat.display_order %></td>
+                  <td><%= cat.name %></td>
+                  <td>
+                    <form action="/admin/settings/categories/<%= cat.id %>/delete" method="POST" onsubmit="return confirm('Remove this category? Existing feedback entries that used it will keep their data but show no category.');">
+                      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
     <!-- Footer Links -->
     <div class="admin-card">
       <h2>Footer Links</h2>

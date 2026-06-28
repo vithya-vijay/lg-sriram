@@ -6,9 +6,12 @@ const { requireLogin } = require('../middleware/auth');
 // ----- List all feedback entries -----
 router.get('/', requireLogin, async (req, res) => {
   try {
-    const [feedback] = await pool.query(
-      'SELECT * FROM feedback ORDER BY submitted_at DESC'
-    );
+    const [feedback] = await pool.query(`
+      SELECT f.*, c.name AS category_name
+      FROM feedback f
+      LEFT JOIN categories c ON c.id = f.category_id
+      ORDER BY f.submitted_at DESC
+    `);
     res.render('admin/feedback-list', {
       adminUsername: req.session.adminUsername,
       feedback
@@ -26,9 +29,11 @@ router.get('/:id/edit', requireLogin, async (req, res) => {
     if (!entry) {
       return res.status(404).send('Feedback entry not found.');
     }
+    const [categories] = await pool.query('SELECT * FROM categories ORDER BY display_order ASC, name ASC');
     res.render('admin/feedback-edit', {
       adminUsername: req.session.adminUsername,
       entry,
+      categories,
       error: null
     });
   } catch (err) {
@@ -39,7 +44,7 @@ router.get('/:id/edit', requireLogin, async (req, res) => {
 
 // ----- Handle edit submission -----
 router.post('/:id/edit', requireLogin, async (req, res) => {
-  const { name, mobile_number, email, amount, bill_number, satisfaction_rating, feedback_text } = req.body;
+  const { name, mobile_number, email, amount, bill_number, model, category_id, satisfaction_rating, feedback_text } = req.body;
   const { id } = req.params;
 
   const errors = [];
@@ -52,9 +57,11 @@ router.post('/:id/edit', requireLogin, async (req, res) => {
   if (!rating || rating < 1 || rating > 10) errors.push('Satisfaction rating must be between 1 and 10.');
 
   if (errors.length > 0) {
+    const [categories] = await pool.query('SELECT * FROM categories ORDER BY display_order ASC, name ASC');
     return res.render('admin/feedback-edit', {
       adminUsername: req.session.adminUsername,
-      entry: { id, name, mobile_number, email, amount, bill_number, satisfaction_rating, feedback_text },
+      entry: { id, name, mobile_number, email, amount, bill_number, model, category_id, satisfaction_rating, feedback_text },
+      categories,
       error: errors.join(' ')
     });
   }
@@ -63,16 +70,22 @@ router.post('/:id/edit', requireLogin, async (req, res) => {
     await pool.query(
       `UPDATE feedback SET
         name = ?, mobile_number = ?, email = ?, amount = ?,
-        bill_number = ?, satisfaction_rating = ?, feedback_text = ?
+        bill_number = ?, model = ?, category_id = ?, satisfaction_rating = ?, feedback_text = ?
        WHERE id = ?`,
-      [name.trim(), mobile_number, email.trim(), parseFloat(amount), bill_number.trim(), rating, feedback_text ? feedback_text.trim() : null, id]
+      [
+        name.trim(), mobile_number, email.trim(), parseFloat(amount),
+        bill_number.trim(), model ? model.trim() : null, category_id ? parseInt(category_id, 10) : null,
+        rating, feedback_text ? feedback_text.trim() : null, id
+      ]
     );
     res.redirect('/admin/feedback');
   } catch (err) {
     console.error('Error updating feedback:', err);
+    const [categories] = await pool.query('SELECT * FROM categories ORDER BY display_order ASC, name ASC');
     res.render('admin/feedback-edit', {
       adminUsername: req.session.adminUsername,
       entry: req.body,
+      categories,
       error: 'Something went wrong while saving changes.'
     });
   }
