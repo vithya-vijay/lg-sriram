@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains DB password, session secret)
+.env
+
+# Uploaded files (logo images shouldn't be committed)
+public/uploads/logo/*
+!public/uploads/logo/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+*.log
+
+# Editor folders
+.vscode/
+.idea/

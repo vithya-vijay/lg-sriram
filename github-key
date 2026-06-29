@@ -1,0 +1,7 @@
+
+# Session secret (use any long random string, generated github token to push)
+# SESSION_SECRET=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
+
+npm run init-db
+node config/migrate_add_category_model.js
+npm start
