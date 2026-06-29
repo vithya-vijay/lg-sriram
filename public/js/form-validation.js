@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const nameError = document.getElementById('name-error');
   const mobileError = document.getElementById('mobile-error');
   const emailError = document.getElementById('email-error');
+  const categoryError = document.getElementById('category-error');
+  const ratingError = document.getElementById('rating-error');
   const mobileChecking = document.getElementById('mobile-checking');
 
   const existingSection = document.getElementById('existing-feedback-section');
@@ -89,22 +91,51 @@ document.addEventListener('DOMContentLoaded', function () {
   // ----- Final check before submit -----
   form.addEventListener('submit', function (e) {
     let valid = true;
+    let firstInvalidEl = null;
 
     if (nameInput.value.trim().length < 2) {
       nameError.textContent = 'Please enter your name.';
       valid = false;
+      firstInvalidEl = firstInvalidEl || nameInput;
     }
     if (!/^\d{10}$/.test(mobileInput.value)) {
       mobileError.textContent = 'Mobile number must be exactly 10 digits.';
       valid = false;
+      firstInvalidEl = firstInvalidEl || mobileInput;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
       emailError.textContent = 'Please enter a valid email address.';
       valid = false;
+      firstInvalidEl = firstInvalidEl || emailInput;
+    }
+
+    const categorySelect = document.getElementById('category_id');
+    if (categorySelect && !categorySelect.value) {
+      categoryError.textContent = 'Please select a category.';
+      valid = false;
+      firstInvalidEl = firstInvalidEl || categorySelect;
+    } else if (categoryError) {
+      categoryError.textContent = '';
+    }
+
+    const ratingChecked = document.querySelector('input[name="satisfaction_rating"]:checked');
+    if (!ratingChecked) {
+      ratingError.textContent = 'Please choose a rating from 1 to 10.';
+      valid = false;
+      firstInvalidEl = firstInvalidEl || document.getElementById('rating-scale');
+    } else if (ratingError) {
+      ratingError.textContent = '';
     }
 
     if (!valid) {
       e.preventDefault();
+      // iOS Safari can leave the browser's native validation bubble
+      // anchored off-screen if the field is below the fold — scroll the
+      // first problem field into view so the customer can actually see
+      // what's wrong instead of the submit silently doing nothing.
+      if (firstInvalidEl) {
+        firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   });
 });

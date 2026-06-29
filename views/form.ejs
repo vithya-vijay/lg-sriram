@@ -83,6 +83,7 @@
                 <option value="<%= cat.id %>" <%= (formData.category_id == cat.id) ? 'selected' : '' %>><%= cat.name %></option>
               <% }) %>
             </select>
+            <span class="field-error" id="category-error"></span>
           </div>
 
           <div class="form-group">
@@ -115,6 +116,7 @@
               <label for="rating<%= i %>"><%= i %></label>
             <% } %>
           </div>
+          <span class="field-error" id="rating-error"></span>
         </div>
 
         <div class="form-group">
