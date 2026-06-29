@@ -12,7 +12,13 @@
   <main class="admin-main">
     <div class="admin-page-header">
       <h1>📝 Feedback Entries</h1>
-      <span class="badge"><%= feedback.length %> total</span>
+      <span class="badge">
+        <% if (pagination.total > 0) { %>
+          Showing <%= pagination.startRow %>–<%= pagination.endRow %> of <%= pagination.total %>
+        <% } else { %>
+          0 total
+        <% } %>
+      </span>
     </div>
 
     <div class="admin-card">
@@ -40,7 +46,7 @@
             <tbody>
               <% feedback.forEach((f, index) => { %>
                 <tr>
-                  <td><%= index + 1 %></td>
+                  <td><%= pagination.startRow + index %></td>
                   <td><%= f.name %></td>
                   <td><%= f.mobile_number %></td>
                   <td><a href="mailto:<%= f.email %>"><%= f.email %></a></td>
@@ -62,6 +68,40 @@
             </tbody>
           </table>
         </div>
+
+        <% if (pagination.totalPages > 1) { %>
+          <nav class="pagination" aria-label="Feedback pages">
+            <a href="/admin/feedback?page=<%= Math.max(1, pagination.page - 1) %>"
+               class="page-link <%= pagination.page === 1 ? 'disabled' : '' %>">‹ Prev</a>
+
+            <% 
+              // Show a small window of page numbers around the current page,
+              // plus the first and last page, with "…" gaps — avoids a wall
+              // of 50 page links when there's a lot of data.
+              const windowSize = 2;
+              const pages = [];
+              for (let p = 1; p <= pagination.totalPages; p++) {
+                if (p === 1 || p === pagination.totalPages || Math.abs(p - pagination.page) <= windowSize) {
+                  pages.push(p);
+                } else if (pages[pages.length - 1] !== '…') {
+                  pages.push('…');
+                }
+              }
+            %>
+
+            <% pages.forEach(p => { %>
+              <% if (p === '…') { %>
+                <span class="page-ellipsis">…</span>
+              <% } else { %>
+                <a href="/admin/feedback?page=<%= p %>"
+                   class="page-link <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+              <% } %>
+            <% }) %>
+
+            <a href="/admin/feedback?page=<%= Math.min(pagination.totalPages, pagination.page + 1) %>"
+               class="page-link <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">Next ›</a>
+          </nav>
+        <% } %>
       <% } %>
     </div>
   </main>

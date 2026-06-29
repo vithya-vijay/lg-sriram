@@ -3,18 +3,46 @@ const router = express.Router();
 const pool = require('../config/db');
 const { requireLogin } = require('../middleware/auth');
 
-// ----- List all feedback entries -----
+// ----- List all feedback entries (paginated, 20 per page) -----
+const PAGE_SIZE = 20;
+
 router.get('/', requireLogin, async (req, res) => {
   try {
-    const [feedback] = await pool.query(`
-      SELECT f.*, c.name AS category_name
-      FROM feedback f
-      LEFT JOIN categories c ON c.id = f.category_id
-      ORDER BY f.submitted_at DESC
-    `);
+    let page = parseInt(req.query.page, 10);
+    if (!page || page < 1) page = 1;
+
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM feedback');
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+    // Clamp page to a valid range so a stray ?page=999 doesn't error or
+    // return an empty-looking page with no way back.
+    if (page > totalPages) page = totalPages;
+
+    const offset = (page - 1) * PAGE_SIZE;
+
+    // LIMIT/OFFSET are interpolated directly as validated integers rather
+    // than bound params — some mysql2 configurations don't accept
+    // placeholders in LIMIT/OFFSET reliably. Safe here since both values
+    // are derived from parseInt() above, never from raw user input.
+    const [feedback] = await pool.query(
+      `SELECT f.*, c.name AS category_name
+       FROM feedback f
+       LEFT JOIN categories c ON c.id = f.category_id
+       ORDER BY f.submitted_at DESC
+       LIMIT ${PAGE_SIZE} OFFSET ${offset}`
+    );
+
     res.render('admin/feedback-list', {
       adminUsername: req.session.adminUsername,
-      feedback
+      feedback,
+      pagination: {
+        page,
+        totalPages,
+        total,
+        pageSize: PAGE_SIZE,
+        startRow: total === 0 ? 0 : offset + 1,
+        endRow: Math.min(offset + PAGE_SIZE, total)
+      }
     });
   } catch (err) {
     console.error('Error loading feedback list:', err);
